@@ -2,6 +2,7 @@
 
 ## Development Workflow
 
+- **First-time setup** - Run `scripts/setup.sh` to install Linux system dependencies (fontconfig, clang, mold, lld) and verify the Rust stable toolchain. Use `--check` to verify without installing.
 - **Commit as you go** - Make small, focused commits after completing each feature or fix
 - If the git state is not clean, or there are other agents working in the codebase in parallel, do your best to still commit your work. 
 - **Push when done** - Push all commits to remote when finishing a task or session
@@ -15,6 +16,20 @@
 - **Rebuild when done** - When you are done making changes, build the source.
 - **Bump version for releases** - Update version in `Cargo.toml` when making releases. When cutting a new release, look at all the changes that happened since the last release and determine what the version bump should be ie patch or minor, etc. 
 - **Remote builds available** - Use `scripts/remote_build.sh` to offload heavy cargo work to another machine. If your build is terminated, likely is because there are not enough resources on this machine to build. use remote build in that case. Try checking the resource avaliablity on the machine before you run a build. 
+
+## Crate Routing
+
+See [docs/CRATE_OWNERSHIP_BOUNDARIES.md](docs/CRATE_OWNERSHIP_BOUNDARIES.md) for crate boundaries, ownership rules, and the move checklist.
+
+| Crate group | CI test cohort / check route |
+| --- | --- |
+| Providers (`jcode-provider-*`) | `provider_matrix` integration tests (Build & Test job) |
+| TUI (`jcode-tui-*`) | `jcode-tui --lib` serial cohort (Build & Test, Linux) |
+| Desktop (`jcode-desktop2`) | `profile::` frame-budget tests (Quality Guardrails job) |
+| Core (`jcode-core`, `jcode-app-core`, `jcode-base`) | `retention_readiness`, `secret_input`, `test_stdin_forwarding` cohorts + `--lib --bins` compile (Build & Test) |
+| Type crates (`jcode-*-types`) | dependency-boundary ratchet (Quality Guardrails) + focused `cargo check` per CRATE_OWNERSHIP_BOUNDARIES.md |
+
+Delivery policy: see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Logs
 - Logs are written to `~/.jcode/logs/` (daily files like `jcode-YYYY-MM-DD.log`).

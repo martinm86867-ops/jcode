@@ -103,6 +103,29 @@ The guard blocks direct dependencies from `jcode-*-types` crates to root/runtime
 
 ## Test policy
 
+### CI cohort membership rule (opt-out)
+
+Every workspace crate's lib tests run in CI by default through the catch-all
+cohort step in `ci.yml` ("Run remaining workspace crate tests"). A crate is
+excluded from the catch-all **only** when it has a dedicated named cohort with
+its own timeout, parallelism, or environment constraints. New crates are covered
+automatically without any CI edit.
+
+Current named cohorts (excluded from the catch-all):
+
+| Crate | Named cohort | Constraint |
+| --- | --- | --- |
+| `jcode-app-core` | `retention_readiness`, `test_stdin_forwarding` | Filtered test names |
+| `jcode-base` | `secret_input` pty | Forks a pty; non-Windows only |
+| `jcode-embedding` | numeric-stability | Linux only; fetches ONNX model |
+| `jcode-tui` | serial lib cohort | `--test-threads=1`; Linux only |
+| `jcode-desktop2` | frame-budget | Quality Guardrails job |
+
+To opt a crate out of the catch-all, add a dedicated cohort step for it in
+`ci.yml` and add its name to the `--exclude` list in the catch-all step.
+
+### Focused validation during development
+
 Prefer focused filters for validation. Broad filters often select unrelated stateful, timing-sensitive, or benchmark tests.
 
 Known broad-filter hazards observed during modularization:

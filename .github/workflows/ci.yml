@@ -379,6 +379,34 @@ jobs:
           python3 .github/scripts/run_with_timeout.py 600 \
             "$(rustup which cargo)" test --target ${{ matrix.target }} --test e2e
 
+      - name: Run remaining workspace crate tests (catch-all cohort)
+        shell: bash
+        # Cohort membership rule: every workspace crate's lib tests run in CI by
+        # default. A crate is excluded from this catch-all ONLY when it has a
+        # dedicated named cohort above (with its own timeout, parallelism, or
+        # environment constraints). New crates are covered automatically without
+        # any CI edit. To opt a crate out, add a dedicated cohort step for it.
+        #
+        # Excluded here (covered by named cohorts above):
+        #   jcode-app-core  -> retention_readiness, stdin_forwarding
+        #   jcode-base      -> secret_input pty
+        #   jcode-embedding -> numeric-stability (Linux, model fetch)
+        #   jcode-tui       -> serial lib cohort (Linux)
+        #   jcode-desktop2  -> frame-budget (Quality Guardrails)
+        #
+        # Reduced parallelism avoids shared-state flakes in crates that have not
+        # been audited for concurrency. The longer timeout accommodates cold
+        # compilation of many small crate test harnesses.
+        run: |
+          python3 .github/scripts/run_with_timeout.py 900 \
+            "$(rustup which cargo)" test --target ${{ matrix.target }} --workspace --lib \
+            --exclude jcode-app-core \
+            --exclude jcode-base \
+            --exclude jcode-embedding \
+            --exclude jcode-tui \
+            --exclude jcode-desktop2 \
+            -- --test-threads=2
+
       - name: Check PowerShell script syntax (Windows)
         if: runner.os == 'Windows'
         shell: pwsh

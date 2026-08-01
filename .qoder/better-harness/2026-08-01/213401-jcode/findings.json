@@ -1,0 +1,141 @@
+{
+  "summary": {
+    "projectName": "jcode",
+    "locale": "en",
+    "modelId": "agent-work-loop-v4",
+    "reportContractVersion": 25,
+    "overview": "The project has strong mechanical quality gates and a well-documented Rust crate routing surface, but session evidence is unavailable for this window. Two inspected gaps remain: Python validation is declared but not enforced in CI, and the two largest non-Rust source trees lack agent-facing instructions.",
+    "aiAgentPractice": {
+      "inspectedSurfaces": [
+        "Rules",
+        "Skills",
+        "Workflows",
+        "Memories"
+      ],
+      "coverageRows": [
+        {
+          "surface": "Rules",
+          "scopes": [
+            "Project"
+          ],
+          "count": 1,
+          "paths": [
+            "AGENTS.md"
+          ]
+        },
+        {
+          "surface": "Skills",
+          "scopes": [
+            "Project"
+          ],
+          "count": 1,
+          "paths": [
+            ".qoder/skills/optimization/SKILL.md"
+          ]
+        },
+        {
+          "surface": "Workflows",
+          "scopes": [
+            "Project"
+          ],
+          "count": 7,
+          "paths": [
+            ".github/workflows/ci.yml",
+            ".github/workflows/discord-release.yml",
+            ".github/workflows/freebsd-smoke.yml",
+            ".github/workflows/ios-testflight.yml",
+            ".github/workflows/release.yml",
+            ".github/workflows/require-issue.yml",
+            ".github/workflows/windows-smoke.yml"
+          ]
+        },
+        {
+          "surface": "Memories",
+          "scopes": [
+            "Project"
+          ],
+          "count": 9
+        },
+        {
+          "surface": "Custom Agents",
+          "scopes": [
+            "Project"
+          ],
+          "count": 0
+        }
+      ]
+    },
+    "assignmentSummaries": [],
+    "dimensions": [
+      {
+        "id": "task-understanding",
+        "label": "Task Understanding",
+        "score": 55,
+        "summary": "Root AGENTS.md and crate ownership docs route Rust work clearly, but scripts/ and ios/ have no agent-facing boundary or validation guidance.",
+        "findingRefs": [
+          "scripts-ios-no-agent-instructions"
+        ]
+      },
+      {
+        "id": "controlled-execution",
+        "label": "Controlled Execution",
+        "score": 57,
+        "summary": "Setup is scriptable and verifiable in one command with doctor mode; agent-layer permission behavior remains unobserved.",
+        "findingRefs": []
+      },
+      {
+        "id": "change-validation",
+        "label": "Change Validation",
+        "score": 56,
+        "summary": "Nine mechanical ratchets and a local guardrails script mirror CI gates, but Python changes have no wired feedback loop.",
+        "findingRefs": [
+          "python-validation-not-wired"
+        ]
+      },
+      {
+        "id": "reliable-delivery",
+        "label": "Reliable Delivery",
+        "score": 53,
+        "summary": "CI workflows and release automation are present; acceptance decisions and recovery routes cannot be confirmed from repository-owned evidence.",
+        "findingRefs": []
+      },
+      {
+        "id": "learning-capture",
+        "label": "Learning Capture",
+        "score": 38,
+        "summary": "Project memories and one skill exist with clean integrity, but zero eligible sessions prevent evaluating detection, routing, or effectiveness.",
+        "findingRefs": []
+      }
+    ]
+  },
+  "findings": [
+    {
+      "id": "python-validation-not-wired",
+      "title": "Python test files exist but no CI job exercises them",
+      "severity": "Medium",
+      "reason": "The repository contains 116 Python source files and 8 Python test files. CI compiles two release scripts with py_compile and runs one unittest file, but the remaining tests (test_injection_fix.py, test_injection_thorough.py, test_selfdev_reload.py) and the 81 scripts in scripts/ have no lint, type-check, or test gate. An agent modifying Python tooling receives no automated feedback comparable to the Rust guardrails, and regressions can reach main undetected. Owner: scripts/ and tests/*.py. Uncertainty: some scripts may be intentionally ad-hoc; the gap is visible but the intent is not documented.",
+      "expectedOutput": [
+        "Give agents and contributors a mechanical feedback loop for Python changes that catches regressions before merge, comparable to the existing Rust ratchet suite."
+      ],
+      "expectedArtifact": "CI job or step",
+      "aiFixPrompt": "/better-harness fix this issue\n\nWire the existing Python tests into CI as a focused gate. Add a job or step that runs the Python test files already present (tests/test_injection_fix.py, tests/test_injection_thorough.py, tests/test_selfdev_reload.py) and optionally a lint pass (ruff or flake8) on scripts/. Keep the existing Rust guardrail jobs unchanged.\n\n## Validation\n\n- Run the new Python CI step locally and confirm it passes on the current tree\n- Confirm scripts/check_guardrails.sh still passes\n- Verify the new job appears in .github/workflows/ci.yml and triggers on PR",
+      "dimensionRefs": [
+        "change-validation"
+      ]
+    },
+    {
+      "id": "scripts-ios-no-agent-instructions",
+      "title": "Agent instructions do not cover the scripts/ and ios/ source trees",
+      "severity": "Low",
+      "reason": "The evidence-pack identifies scripts/ (74 source files) and ios/TestHarness (34 source files) as instruction-worthy scopes, yet no nested AGENTS.md or equivalent exists. The root AGENTS.md crate-routing table covers only Rust crate groups. An agent tasked with Python scripts or iOS test harness code has no boundary, risk, validation-route, or convention guidance and must infer everything from code alone. Owner: scripts/, ios/. Uncertainty: these trees may be maintained by a single author who considers them self-explanatory; the consequence depends on whether agents are actually tasked there.",
+      "expectedOutput": [
+        "Give an agent operating in scripts/ or ios/ a clear boundary, validation route, and risk note without requiring it to infer conventions from code alone."
+      ],
+      "expectedArtifact": "Nested AGENTS.md files",
+      "aiFixPrompt": "/better-harness fix this issue\n\nAdd a concise nested AGENTS.md to scripts/ and ios/ that states: (1) the tree's purpose and boundary, (2) how to validate changes (test command, lint, or manual check), (3) any risk or convention an agent must respect. Keep each file under 30 lines. Do not restate root AGENTS.md content.\n\n## Validation\n\n- Confirm scripts/AGENTS.md and ios/AGENTS.md exist and are under 30 lines\n- Confirm the root AGENTS.md still passes lint (no missing references)\n- Run scripts/check_guardrails.sh --skip-slow to confirm no ratchet regression",
+      "dimensionRefs": [
+        "task-understanding"
+      ]
+    }
+  ]
+}

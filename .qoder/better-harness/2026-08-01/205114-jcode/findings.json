@@ -1,0 +1,171 @@
+{
+  "summary": {
+    "projectName": "jcode",
+    "locale": "en",
+    "modelId": "agent-work-loop-v4",
+    "reportContractVersion": 25,
+    "overview": "The project has strong mechanical quality gates and a local guardrails runner, but agents lack crate-level context routing, executable environment setup, and full behavioral test coverage. Session evidence was unavailable in this window.",
+    "aiAgentPractice": {
+      "inspectedSurfaces": [
+        "Rules",
+        "Skills"
+      ],
+      "coverageRows": [
+        {
+          "surface": "Rules",
+          "scopes": [
+            "Project"
+          ],
+          "count": 1,
+          "paths": [
+            "AGENTS.md"
+          ]
+        },
+        {
+          "surface": "Skills",
+          "scopes": [
+            "Project"
+          ],
+          "count": 1,
+          "paths": [
+            ".jcode/skills/optimization/SKILL.md"
+          ]
+        },
+        {
+          "surface": "Workflows",
+          "scopes": [
+            "Project"
+          ],
+          "count": 7,
+          "paths": [
+            ".github/workflows/ci.yml",
+            ".github/workflows/discord-release.yml",
+            ".github/workflows/freebsd-smoke.yml",
+            ".github/workflows/ios-testflight.yml",
+            ".github/workflows/release.yml",
+            ".github/workflows/require-issue.yml",
+            ".github/workflows/windows-smoke.yml"
+          ]
+        },
+        {
+          "surface": "Memories",
+          "scopes": [
+            "Project"
+          ],
+          "count": 2
+        },
+        {
+          "surface": "Custom Agents",
+          "scopes": [
+            "Project"
+          ],
+          "count": 0
+        }
+      ]
+    },
+    "assignmentSummaries": [],
+    "dimensions": [
+      {
+        "id": "task-understanding",
+        "label": "Task Understanding",
+        "score": 52,
+        "summary": "AGENTS.md provides workflow cadence and install paths, but does not route agents to crate-level ownership, testing, or boundary documentation that already exists in the repository.",
+        "findingRefs": [
+          "context-map-crate-routing"
+        ]
+      },
+      {
+        "id": "controlled-execution",
+        "label": "Controlled Execution",
+        "score": 55,
+        "summary": "The guardrails script and remote-build escape hatch are present, but no executable setup path exists; critical environment knowledge lives only in CI comments.",
+        "findingRefs": [
+          "environment-setup-narrative"
+        ]
+      },
+      {
+        "id": "change-validation",
+        "label": "Change Validation",
+        "score": 68,
+        "summary": "Six ratchets, clippy, fmt, dependency-boundary checks, and a local parity script form a strong gate layer, but behavioral test execution covers only named cohorts rather than the full workspace.",
+        "findingRefs": [
+          "behavioral-test-cohort-gate"
+        ]
+      },
+      {
+        "id": "reliable-delivery",
+        "label": "Reliable Delivery",
+        "score": 55,
+        "summary": "CI workflows with concurrency control and multi-platform builds are present; branch protection and rollback procedures are not visible in repository-owned files.",
+        "findingRefs": []
+      },
+      {
+        "id": "learning-capture",
+        "label": "Learning Capture",
+        "score": 35,
+        "summary": "No eligible sessions in the observation window prevent evaluating the learning loop; one skill exists on disk but is not tracked by the provider scanner.",
+        "findingRefs": [
+          "skill-inventory-mismatch"
+        ]
+      }
+    ]
+  },
+  "findings": [
+    {
+      "id": "context-map-crate-routing",
+      "title": "Agents cannot reach crate-level guidance from the root instruction file",
+      "severity": "Medium",
+      "reason": "AGENTS.md (34 lines) covers workflow cadence, log paths, and install layout, but does not reference docs/CRATE_OWNERSHIP_BOUNDARIES.md, CONTRIBUTING.md, or any per-crate instruction file. A workspace of 80+ Rust crates has zero nested instruction files. An agent modifying a provider-runtime or TUI crate must discover its test cohort, dependency boundaries, and CI gates by reading CI YAML comments and Python gate scripts, or by pushing and observing failure. The boundary documentation exists but is unreachable from the agent's entry point.",
+      "expectedOutput": [
+        "An agent entering the workspace can follow AGENTS.md links to find the crate boundary rules, the test cohort covering its target crate, and the delivery policy without reading CI internals."
+      ],
+      "expectedArtifact": "AGENTS.md routing section",
+      "aiFixPrompt": "/better-harness fix this issue\n\nAdd a short routing section to AGENTS.md that points agents to docs/CRATE_OWNERSHIP_BOUNDARIES.md for crate boundaries, names the CI test cohort each crate group falls under, and links CONTRIBUTING.md for delivery policy. Keep the addition under 20 lines.\n\n## Validation\n\n- Confirm AGENTS.md references CRATE_OWNERSHIP_BOUNDARIES.md and CONTRIBUTING.md\n- Confirm at least the major crate groups (providers, TUI, desktop, core) have a named test cohort or check route",
+      "dimensionRefs": [
+        "task-understanding"
+      ]
+    },
+    {
+      "id": "environment-setup-narrative",
+      "title": "First-build environment setup exists only as CI comments, not executable tooling",
+      "severity": "Medium",
+      "reason": "System dependencies (libfontconfig1-dev, mold, clang, lld, llvm, ninja-build), toolchain pinning rationale, and linker configuration are documented only inside multi-paragraph CI YAML comments. There is no Makefile, devcontainer, setup script, or doctor command that brings a fresh machine to a buildable state. AGENTS.md's guardrails instruction assumes the environment is already correct. An agent or contributor starting on a clean workspace must correlate CI comments with local compiler errors to diagnose missing prerequisites.",
+      "expectedOutput": [
+        "A fresh Linux workspace reaches a buildable state by running one documented command, without reading CI YAML comments."
+      ],
+      "expectedArtifact": "Executable setup script",
+      "aiFixPrompt": "/better-harness fix this issue\n\nCreate a minimal scripts/setup.sh (or Makefile target) that installs the documented system dependencies for Linux, verifies the Rust stable toolchain, and prints a doctor-style pass/fail summary. Reference it from AGENTS.md.\n\n## Validation\n\n- Run the setup script on a clean environment or verify it installs the packages listed in CI comments\n- Confirm AGENTS.md references the setup entry point",
+      "dimensionRefs": [
+        "controlled-execution"
+      ]
+    },
+    {
+      "id": "behavioral-test-cohort-gate",
+      "title": "Crates outside named CI cohorts have compile-only assurance",
+      "severity": "Medium",
+      "reason": "CI compiles all lib/bin test targets with --no-run but executes only six named cohorts on Linux/macOS and a targeted list on Windows. Crates whose tests fall outside these filters pass CI without any behavioral execution. CI comments document three past incidents (#592, #651, #657) where this opt-in pattern allowed regressions to reach master green. Each was fixed by adding a new cohort, but the structural pattern means the next uncovered crate will only be discovered after an incident.",
+      "expectedOutput": [
+        "A behavioral regression in any workspace crate fails CI rather than passing silently with compile-only assurance."
+      ],
+      "expectedArtifact": "CI catch-all test step",
+      "aiFixPrompt": "/better-harness fix this issue\n\nAdd a periodic or triggered CI step that runs cargo nextest or cargo test across all workspace crates not covered by existing cohorts, even if with a longer timeout or reduced parallelism. Document the cohort membership rule so new crates are covered by default.\n\n## Validation\n\n- Confirm a CI step exists that executes tests for crates outside the named cohorts\n- Confirm the cohort membership rule is documented (opt-out rather than opt-in)",
+      "dimensionRefs": [
+        "change-validation"
+      ]
+    },
+    {
+      "id": "skill-inventory-mismatch",
+      "title": "Optimization skill on disk is not tracked by the provider scanner",
+      "severity": "Low",
+      "reason": "The file .jcode/skills/optimization/SKILL.md exists with valid frontmatter (name, description, allowed-tools) and well-structured procedural content, but the Qoder asset scanner reports zero project Skills. This means the skill may not be routable or discoverable during agent sessions. The scanner may not enumerate the .jcode/skills/ path for the Qoder provider, or the skill may be registered under a different provider convention.",
+      "expectedOutput": [
+        "The optimization skill appears in the provider asset inventory and is routable during agent sessions."
+      ],
+      "expectedArtifact": "Provider skill registration",
+      "aiFixPrompt": "/better-harness fix this issue\n\nVerify whether the Qoder provider discovers skills from .jcode/skills/. If not, either move the skill to the Qoder-expected path (e.g. .qoder/skills/) or configure the provider to scan .jcode/skills/. Confirm the skill appears in the asset inventory after the change.\n\n## Validation\n\n- Run the asset-baseline command and confirm skills count is 1\n- Confirm the optimization skill is listed by name",
+      "dimensionRefs": [
+        "learning-capture"
+      ]
+    }
+  ]
+}
