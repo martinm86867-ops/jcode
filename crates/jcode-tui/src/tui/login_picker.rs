@@ -632,6 +632,7 @@ fn provider_style(provider_id: &str) -> Style {
         | "chutes"
         | "cerebras"
         | "alibaba-coding-plan"
+        | "alibaba-token-plan"
         | "antigravity"
         | "jcode" => Color::Rgb(189, 200, 255),
         _ => Color::Rgb(180, 190, 220),

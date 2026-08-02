@@ -109,6 +109,13 @@ pub enum ProviderChoice {
         alias = "alibaba-coding"
     )]
     AlibabaCodingPlan,
+    #[value(
+        alias = "token-plan",
+        alias = "alibaba-token",
+        alias = "bailian-token-plan",
+        alias = "maas-token-plan"
+    )]
+    AlibabaTokenPlan,
     #[value(alias = "compat", alias = "custom")]
     OpenaiCompatible,
     Cursor,
@@ -171,6 +178,7 @@ impl ProviderChoice {
             Self::Chutes => "chutes",
             Self::Cerebras => "cerebras",
             Self::AlibabaCodingPlan => "alibaba-coding-plan",
+            Self::AlibabaTokenPlan => "alibaba-token-plan",
             Self::OpenaiCompatible => "openai-compatible",
             Self::Cursor => "cursor",
             Self::Copilot => "copilot",
@@ -348,6 +356,10 @@ const PROVIDER_CHOICE_LOGIN_PROVIDERS: &[(ProviderChoice, LoginProviderDescripto
     (
         ProviderChoice::AlibabaCodingPlan,
         crate::provider_catalog::ALIBABA_CODING_PLAN_LOGIN_PROVIDER,
+    ),
+    (
+        ProviderChoice::AlibabaTokenPlan,
+        crate::provider_catalog::ALIBABA_TOKEN_PLAN_LOGIN_PROVIDER,
     ),
     (
         ProviderChoice::OpenaiCompatible,
@@ -1530,6 +1542,7 @@ async fn init_provider_with_options(
         | ProviderChoice::Chutes
         | ProviderChoice::Cerebras
         | ProviderChoice::AlibabaCodingPlan
+        | ProviderChoice::AlibabaTokenPlan
         | ProviderChoice::GeminiApi
         | ProviderChoice::OpenaiCompatible => {
             disable_subscription_runtime_mode();

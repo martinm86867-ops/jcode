@@ -57,6 +57,10 @@ fn test_provider_choice_arg_values() {
         "alibaba-coding-plan"
     );
     assert_eq!(
+        ProviderChoice::AlibabaTokenPlan.as_arg_value(),
+        "alibaba-token-plan"
+    );
+    assert_eq!(
         ProviderChoice::OpenaiCompatible.as_arg_value(),
         "openai-compatible"
     );
@@ -177,18 +181,22 @@ fn test_auto_init_login_selection_preserves_order() {
     );
     assert_eq!(
         resolve_login_selection("12", &providers).map(|provider| provider.id),
-        Some("cursor")
+        Some("alibaba-token-plan")
     );
     assert_eq!(
         resolve_login_selection("13", &providers).map(|provider| provider.id),
-        Some("copilot")
+        Some("cursor")
     );
     assert_eq!(
         resolve_login_selection("14", &providers).map(|provider| provider.id),
-        Some("gemini")
+        Some("copilot")
     );
     assert_eq!(
         resolve_login_selection("15", &providers).map(|provider| provider.id),
+        Some("gemini")
+    );
+    assert_eq!(
+        resolve_login_selection("16", &providers).map(|provider| provider.id),
         Some("antigravity")
     );
 }
