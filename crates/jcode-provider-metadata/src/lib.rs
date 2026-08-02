@@ -369,6 +369,32 @@ mod tests {
     }
 
     #[test]
+    fn alibaba_token_plan_uses_international_token_endpoint() {
+        assert_eq!(ALIBABA_TOKEN_PLAN_PROFILE.id, "alibaba-token-plan");
+        assert_eq!(
+            ALIBABA_TOKEN_PLAN_PROFILE.display_name,
+            "Alibaba Cloud Token Plan"
+        );
+        assert_eq!(
+            ALIBABA_TOKEN_PLAN_PROFILE.api_base,
+            "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
+        );
+        assert_eq!(
+            ALIBABA_TOKEN_PLAN_PROFILE.api_key_env,
+            "BAILIAN_TOKEN_PLAN_API_KEY"
+        );
+        assert_eq!(
+            ALIBABA_TOKEN_PLAN_PROFILE.env_file,
+            "alibaba-token-plan.env"
+        );
+        const { assert!(ALIBABA_TOKEN_PLAN_PROFILE.requires_api_key) };
+        assert!(matches!(
+            ALIBABA_TOKEN_PLAN_LOGIN_PROVIDER.target,
+            LoginProviderTarget::OpenAiCompatible(profile) if profile.id == "alibaba-token-plan"
+        ));
+    }
+
+    #[test]
     fn resolve_login_provider_loose_matches_id_alias_and_display_name() {
         // id
         assert_eq!(

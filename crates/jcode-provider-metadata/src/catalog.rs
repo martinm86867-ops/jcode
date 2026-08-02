@@ -386,6 +386,17 @@ pub const ALIBABA_CODING_PLAN_PROFILE: OpenAiCompatibleProfile = OpenAiCompatibl
     requires_api_key: true,
 };
 
+pub const ALIBABA_TOKEN_PLAN_PROFILE: OpenAiCompatibleProfile = OpenAiCompatibleProfile {
+    id: "alibaba-token-plan",
+    display_name: "Alibaba Cloud Token Plan",
+    api_base: "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1",
+    api_key_env: "BAILIAN_TOKEN_PLAN_API_KEY",
+    env_file: "alibaba-token-plan.env",
+    setup_url: "https://www.alibabacloud.com/help/en/model-studio/",
+    default_model: Some("qwen3.8-max-preview"),
+    requires_api_key: true,
+};
+
 pub const NVIDIA_NIM_PROFILE: OpenAiCompatibleProfile = OpenAiCompatibleProfile {
     id: "nvidia-nim",
     display_name: "NVIDIA NIM",
@@ -432,7 +443,7 @@ pub const OPENAI_COMPAT_PROFILE: OpenAiCompatibleProfile = OpenAiCompatibleProfi
     requires_api_key: true,
 };
 
-pub(crate) const OPENAI_COMPAT_PROFILES: [OpenAiCompatibleProfile; 37] = [
+pub(crate) const OPENAI_COMPAT_PROFILES: [OpenAiCompatibleProfile; 38] = [
     OPENCODE_PROFILE,
     OPENCODE_GO_PROFILE,
     ZAI_PROFILE,
@@ -440,6 +451,7 @@ pub(crate) const OPENAI_COMPAT_PROFILES: [OpenAiCompatibleProfile; 37] = [
     CHUTES_PROFILE,
     CEREBRAS_PROFILE,
     ALIBABA_CODING_PLAN_PROFILE,
+    ALIBABA_TOKEN_PLAN_PROFILE,
     AI302_PROFILE,
     BASETEN_PROFILE,
     CORTECS_PROFILE,
@@ -688,6 +700,26 @@ pub const ALIBABA_CODING_PLAN_LOGIN_PROVIDER: LoginProviderDescriptor = LoginPro
     menu_detail: "API key, dedicated Alibaba coding endpoint",
     recommended: false,
     target: LoginProviderTarget::OpenAiCompatible(ALIBABA_CODING_PLAN_PROFILE),
+    order: LoginProviderSurfaceOrder::new(Some(10), Some(9), Some(10), Some(9), Some(9)),
+};
+
+pub const ALIBABA_TOKEN_PLAN_LOGIN_PROVIDER: LoginProviderDescriptor = LoginProviderDescriptor {
+    id: "alibaba-token-plan",
+    display_name: "Alibaba Cloud Token Plan",
+    auth_kind: LoginProviderAuthKind::ApiKey,
+    auth_state_key: LoginProviderAuthStateKey::OpenRouterLike,
+    auth_status_method: "API key",
+    aliases: &[
+        "token-plan",
+        "alibaba-token",
+        "bailian-token-plan",
+        "maas-token-plan",
+    ],
+    menu_detail: "API key, Alibaba ModelStudio token plan endpoint",
+    recommended: false,
+    target: LoginProviderTarget::OpenAiCompatible(ALIBABA_TOKEN_PLAN_PROFILE),
+    // Shares the coding plan's order key so the two Alibaba plans sort adjacent
+    // (array order places the token plan immediately after the coding plan).
     order: LoginProviderSurfaceOrder::new(Some(10), Some(9), Some(10), Some(9), Some(9)),
 };
 
@@ -1112,7 +1144,7 @@ pub const GOOGLE_LOGIN_PROVIDER: LoginProviderDescriptor = LoginProviderDescript
     order: LoginProviderSurfaceOrder::new(Some(13), None, None, None, None),
 };
 
-pub(crate) const LOGIN_PROVIDERS: [LoginProviderDescriptor; 48] = [
+pub(crate) const LOGIN_PROVIDERS: [LoginProviderDescriptor; 49] = [
     AUTO_IMPORT_LOGIN_PROVIDER,
     CLAUDE_LOGIN_PROVIDER,
     ANTHROPIC_API_LOGIN_PROVIDER,
@@ -1129,6 +1161,7 @@ pub(crate) const LOGIN_PROVIDERS: [LoginProviderDescriptor; 48] = [
     CHUTES_LOGIN_PROVIDER,
     CEREBRAS_LOGIN_PROVIDER,
     ALIBABA_CODING_PLAN_LOGIN_PROVIDER,
+    ALIBABA_TOKEN_PLAN_LOGIN_PROVIDER,
     AI302_LOGIN_PROVIDER,
     BASETEN_LOGIN_PROVIDER,
     CORTECS_LOGIN_PROVIDER,
