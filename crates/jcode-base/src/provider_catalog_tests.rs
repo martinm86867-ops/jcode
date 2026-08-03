@@ -1108,6 +1108,51 @@ fn open_weight_family_context_limits_match_published_windows() {
     assert_eq!(f("some-unknown-model"), None);
 }
 
+/// The Alibaba Token Plan gateway advertises per-model `contextWindowSize`
+/// values that differ from the generic open-weight classifier; the profile
+/// table must pin the gateway's values.
+#[test]
+fn alibaba_token_plan_context_limits_match_gateway_metadata() {
+    let f = |model: &str| openai_compatible_profile_context_limit("alibaba-token-plan", model);
+
+    // qwen3.x Token Plan models serve 1M (the global classifier says 256K).
+    assert_eq!(f("qwen3.7-plus"), Some(1_000_000));
+    assert_eq!(f("qwen3.6-plus"), Some(1_000_000));
+    assert_eq!(f("qwen3.7-max"), Some(1_000_000));
+    assert_eq!(f("qwen3.8-max-preview"), Some(1_000_000));
+    assert_eq!(f("qwen3.6-flash"), Some(1_000_000));
+
+    // Models matching the global classifier stay correct through the profile.
+    assert_eq!(f("deepseek-v4-pro"), Some(1_000_000));
+    assert_eq!(f("deepseek-v4-flash"), Some(1_000_000));
+    assert_eq!(f("kimi-k2.7-code"), Some(262_144));
+    assert_eq!(f("kimi-k2.6"), Some(262_144));
+    assert_eq!(f("kimi-k2.5"), Some(262_144));
+    assert_eq!(f("glm-5.2"), Some(1_000_000));
+
+    // Gateway-specific windows that differ from the global classifier.
+    assert_eq!(f("deepseek-v3.2"), Some(131_072));
+    assert_eq!(f("glm-5.1"), Some(202_752));
+    assert_eq!(f("glm-5"), Some(202_752));
+    assert_eq!(f("MiniMax-M2.5"), Some(196_608));
+}
+
+/// Every static Token Plan model resolves to a concrete window so nothing
+/// falls back to the generic default (see `every_static_profile_model_has_a_known_context_limit`).
+#[test]
+fn alibaba_token_plan_static_models_all_resolve() {
+    let profile = jcode_provider_metadata::ALIBABA_TOKEN_PLAN_PROFILE;
+    let models = openai_compatible_profile_static_models(profile);
+    assert!(!models.is_empty());
+    let limits = openai_compatible_profile_static_context_limits(profile);
+    for model in &models {
+        assert!(
+            limits.contains_key(model),
+            "alibaba-token-plan static model {model} has no context limit"
+        );
+    }
+}
+
 #[test]
 fn minimax_default_provider_applies_openai_api_key_env_not_openrouter() {
     // Regression for #407: `default_provider = "minimax"` (the built-in MiniMax

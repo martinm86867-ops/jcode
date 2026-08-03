@@ -519,6 +519,27 @@ pub fn openai_compatible_profile_static_models(profile: OpenAiCompatibleProfile)
             push("kimi-k2.5");
             push("MiniMax-M2.5");
         }
+        // ModelStudio Token Plan catalog (see its `contextWindowSize` metadata).
+        // Several windows differ from the generic open-weight classifier: the
+        // qwen3.x Token Plan models serve 1M, glm-5/5.1 serve 202,752, and
+        // deepseek-v3.2 is capped at 131,072 on this gateway.
+        "alibaba-token-plan" => {
+            push("qwen3.8-max-preview");
+            push("qwen3.7-max");
+            push("qwen3.7-plus");
+            push("qwen3.6-plus");
+            push("qwen3.6-flash");
+            push("deepseek-v4-pro");
+            push("deepseek-v4-flash");
+            push("deepseek-v3.2");
+            push("kimi-k2.7-code");
+            push("kimi-k2.6");
+            push("kimi-k2.5");
+            push("glm-5.2");
+            push("glm-5.1");
+            push("glm-5");
+            push("MiniMax-M2.5");
+        }
         "gemini-api" => {
             push("gemini-2.5-flash");
             push("gemini-2.5-pro");
@@ -555,6 +576,23 @@ pub fn openai_compatible_profile_context_limit(profile_id: &str, model: &str) ->
         // direct profile runs through the OpenRouter/OpenAI-compatible provider
         // implementation, whose live catalog can be unavailable during startup.
         "deepseek" if model.starts_with("deepseek-v4-") => Some(1_000_000),
+        // ModelStudio Token Plan: per-model windows from the gateway's model
+        // metadata. These differ from the generic open-weight classifier
+        // (qwen3.x models serve 1M here, glm-5/5.1 serve 202,752, deepseek-v3.2
+        // is 131,072, MiniMax-M2.5 is 196,608).
+        "alibaba-token-plan" => {
+            if model.starts_with("qwen3.") {
+                return Some(1_000_000);
+            }
+            match model.as_str() {
+                "deepseek-v4-pro" | "deepseek-v4-flash" | "glm-5.2" => Some(1_000_000),
+                "deepseek-v3.2" => Some(131_072),
+                "kimi-k2.7-code" | "kimi-k2.6" | "kimi-k2.5" => Some(262_144),
+                "glm-5.1" | "glm-5" => Some(202_752),
+                "minimax-m2.5" => Some(196_608),
+                _ => jcode_provider_core::models::open_weight_family_context_limit(&model),
+            }
+        }
         // Fall back to the shared open-weight family classifier. Many bundled
         // OpenAI-compatible gateways (Z.AI/GLM, Moonshot/Kimi, MiniMax, Qwen,
         // etc.) serve `/v1/models` entries without a `context_length`, so this
