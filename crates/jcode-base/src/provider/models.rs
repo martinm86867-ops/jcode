@@ -1113,7 +1113,21 @@ pub fn context_limit_for_model_with_provider(
     model: &str,
     provider_hint: Option<&str>,
 ) -> Option<usize> {
-    context_limit_for_model_with_provider_and_cache(model, provider_hint, get_cached_context_limit)
+    // A hint naming a built-in OpenAI-compatible profile (canonical id or
+    // display name, e.g. the remote TUI's "Alibaba Cloud Token Plan") routes
+    // the lookup through that gateway's static context table ahead of the
+    // generic open-weight family classifier, which can misprice gateway-
+    // specific windows (e.g. qwen3.* at 262K while Token Plan serves 1M).
+    // The table sits *below* the explicit cache so user `context_window`
+    // config still wins, mirroring the runtime provider's precedence.
+    let profile_limit = provider_hint.and_then(|hint| {
+        let profile_id =
+            crate::provider_catalog::openai_compatible_profile_id_for_display_name(hint)?;
+        crate::provider_catalog::openai_compatible_profile_context_limit(profile_id, model)
+    });
+    context_limit_for_model_with_provider_and_cache(model, provider_hint, |m| {
+        get_cached_context_limit(m).or(profile_limit)
+    })
 }
 
 pub fn resolve_model_capabilities(model: &str, provider_hint: Option<&str>) -> ModelCapabilities {

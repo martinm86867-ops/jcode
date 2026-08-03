@@ -1809,6 +1809,50 @@ fn test_context_limit_respects_provider_hint() {
 }
 
 #[test]
+fn test_context_limit_respects_openai_compatible_profile_hint() {
+    // The remote TUI passes the server's display name as the hint; both the
+    // display name and the canonical id must route through the profile's
+    // gateway-specific context table instead of the generic classifier.
+    for hint in ["Alibaba Cloud Token Plan", "alibaba-token-plan"] {
+        assert_eq!(
+            context_limit_for_model_with_provider("qwen3.8-max", Some(hint)),
+            Some(1_000_000),
+            "hint {hint}"
+        );
+        assert_eq!(
+            context_limit_for_model_with_provider("qwen3.7-plus", Some(hint)),
+            Some(1_000_000),
+            "hint {hint}"
+        );
+        assert_eq!(
+            context_limit_for_model_with_provider("glm-5", Some(hint)),
+            Some(202_752),
+            "hint {hint}"
+        );
+        assert_eq!(
+            context_limit_for_model_with_provider("deepseek-v3.2", Some(hint)),
+            Some(131_072),
+            "hint {hint}"
+        );
+        assert_eq!(
+            context_limit_for_model_with_provider("MiniMax-M2.5", Some(hint)),
+            Some(196_608),
+            "hint {hint}"
+        );
+    }
+
+    // Non-profile hints keep the generic classifier behavior.
+    assert_eq!(
+        context_limit_for_model_with_provider("qwen3.8-max", Some("openrouter")),
+        Some(262_144)
+    );
+    assert_eq!(
+        context_limit_for_model_with_provider("qwen3.8-max", None),
+        Some(262_144)
+    );
+}
+
+#[test]
 fn test_resolve_model_capabilities_uses_provider_hint() {
     let openai = resolve_model_capabilities("gpt-5.4", Some("openai"));
     assert_eq!(openai.provider.as_deref(), Some("openai"));
